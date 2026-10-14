@@ -79,4 +79,6 @@ public class Member {
         loans.add(loan);
         loan.setMember(this);
     }
+
+
 }

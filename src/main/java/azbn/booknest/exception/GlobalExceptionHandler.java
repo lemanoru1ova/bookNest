@@ -14,30 +14,32 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(BookNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleBookNotFound(
-            BookNotFoundException ex, HttpServletRequest request) {
-
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.NOT_FOUND.value(),
-                "Not Found",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    @ExceptionHandler({
+            BookNotFoundException.class,
+            CategoryNotFoundException.class,
+            AuthorNotFoundException.class,
+            MemberNotFoundException.class,
+            LoanNotFoundException.class
+    })
+    public ResponseEntity<ErrorResponse> handleNotFound(
+            RuntimeException ex, HttpServletRequest request) {
+        return build(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), request, null);
     }
 
-    @ExceptionHandler(DuplicateIsbnException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateIsbn(
-            DuplicateIsbnException ex, HttpServletRequest request) {
+    @ExceptionHandler({
+            DuplicateIsbnException.class,
+            DuplicateEmailException.class,
+            DuplicateNameException.class
+    })
+    public ResponseEntity<ErrorResponse> handleConflict(
+            RuntimeException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "Conflict", ex.getMessage(), request, null);
+    }
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.CONFLICT.value(),
-                "Conflict",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
+    @ExceptionHandler(BookNotAvailableException.class)
+    public ResponseEntity<ErrorResponse> handleNotAvailable(
+            BookNotAvailableException ex, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), request, null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -48,27 +50,22 @@ public class GlobalExceptionHandler {
         for (FieldError fieldError : ex.getBindingResult().getFieldErrors()) {
             errors.put(fieldError.getField(), fieldError.getDefaultMessage());
         }
-
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.BAD_REQUEST.value(),
-                "Validation Failed",
-                "Bir və ya bir neçə sahə yanlışdır",
-                request.getRequestURI(),
-                errors
-        );
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
+        return build(HttpStatus.BAD_REQUEST, "Validation Failed",
+                "Bir və ya bir neçə sahə yanlışdır", request, errors);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneric(
             Exception ex, HttpServletRequest request) {
+        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Internal Server Error",
+                ex.getMessage(), request, null);
+    }
 
-        ErrorResponse error = new ErrorResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                "Internal Server Error",
-                ex.getMessage(),
-                request.getRequestURI()
-        );
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
+    private ResponseEntity<ErrorResponse> build(HttpStatus status, String error,
+                                                String message, HttpServletRequest request,
+                                                Map<String, String> validationErrors) {
+        ErrorResponse body = new ErrorResponse(
+                status.value(), error, message, request.getRequestURI(), validationErrors);
+        return ResponseEntity.status(status).body(body);
     }
 }

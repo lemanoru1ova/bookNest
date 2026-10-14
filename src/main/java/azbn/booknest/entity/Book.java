@@ -87,4 +87,8 @@ public class Book {
             detail.setBook(this);
         }
     }
+
+    public void setAvailableCopies(Integer availableCopies) {
+        this.availableCopies = availableCopies;
+    }
 }
