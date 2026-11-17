@@ -8,6 +8,10 @@ public class BookNestApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(BookNestApplication.class, args);
+
+        System.out.println("BookNestApplication started successfully!");
+
+
     }
 
 }
